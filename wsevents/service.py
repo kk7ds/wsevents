@@ -1,4 +1,3 @@
-import argparse
 import asyncio
 import json
 import logging
@@ -8,14 +7,6 @@ import os
 import aiohttp
 import aiohttp.server
 import aiohttp.websocket
-import puredaemon
-import setproctitle
-
-
-LOG_FORMAT = '%(asctime)-15s %(name)s %(levelname)s %(message)s'
-logging.basicConfig(level=logging.DEBUG,
-                    format=LOG_FORMAT)
-logging.getLogger('asyncio').setLevel(logging.ERROR)
 
 
 class BadEvent(Exception):
@@ -143,50 +134,3 @@ class Handler(aiohttp.server.ServerHttpProtocol):
             resp.send_headers()
             yield from resp.write_eof()
             self.log.debug('Unknown request for %s' % message.path)
-
-
-def setup_logging():
-    log = logging.getLogger()
-    fh = logging.handlers.RotatingFileHandler('events.log',
-                                              maxBytes=10*1024*1024,
-                                              backupCount=10)
-    ff  = logging.Formatter(LOG_FORMAT)
-
-    class EventFilter(object):
-        @staticmethod
-        def filter(record):
-            if record.levelno != logging.INFO:
-                return 0
-            if record.message.startswith('Event:'):
-                return 1
-            return 0
-
-    fh.addFilter(EventFilter)
-    fh.setFormatter(ff)
-    log.addHandler(fh)
-
-    fh = logging.handlers.RotatingFileHandler('debug.log',
-                                              maxBytes=10*1024*1024,
-                                              backupCount=10)
-    ff = logging.Formatter(LOG_FORMAT)
-    fh.setFormatter(ff)
-    log.addHandler(fh)
-
-
-def main():
-    parser = argparse.ArgumentParser(description='Simple Event Service')
-    parser.add_argument('--daemon', dest='daemon', action='store_true',
-                        default=False)
-    parser.add_argument('--port', dest='port', type=int, default=5003)
-    args = parser.parse_args()
-    if args.daemon:
-        puredaemon.daemon(nochdir=True)
-    setproctitle.setproctitle('event_service')
-    setup_logging()
-    loop = asyncio.get_event_loop()
-    f = loop.create_server(Handler, '0.0.0.0', args.port)
-    server = loop.run_until_complete(f)
-    loop.run_forever()
-
-if __name__ == '__main__':
-    main()

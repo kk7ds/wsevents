@@ -1,0 +1,62 @@
+#!/danplanet/users/dan/venv3/bin/python
+
+import argparse
+import asyncio
+import logging
+
+import puredaemon
+import setproctitle
+
+from wsevents import service
+
+
+def setup_logging(level=logging.DEBUG):
+    log_format = '%(asctime)-15s %(name)s %(levelname)s %(message)s'
+    logging.basicConfig(level=level, format=log_format)
+    logging.getLogger('asyncio').setLevel(logging.ERROR)
+
+    log = logging.getLogger()
+    fh = logging.handlers.RotatingFileHandler('events.log',
+                                              maxBytes=10*1024*1024,
+                                              backupCount=10)
+    ff = logging.Formatter(log_format)
+
+    class EventFilter(object):
+        @staticmethod
+        def filter(record):
+            if record.levelno != logging.INFO:
+                return 0
+            if record.message.startswith('Event:'):
+                return 1
+            return 0
+
+    fh.addFilter(EventFilter)
+    fh.setFormatter(ff)
+    log.addHandler(fh)
+
+    fh = logging.handlers.RotatingFileHandler('debug.log',
+                                              maxBytes=10*1024*1024,
+                                              backupCount=10)
+    ff = logging.Formatter(log_format)
+    fh.setFormatter(ff)
+    log.addHandler(fh)
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Simple Event Service')
+    parser.add_argument('--daemon', dest='daemon', action='store_true',
+                        default=False)
+    parser.add_argument('--port', dest='port', type=int, default=5003)
+    args = parser.parse_args()
+    if args.daemon:
+        puredaemon.daemon(nochdir=True)
+    setproctitle.setproctitle('event_service')
+    setup_logging()
+    loop = asyncio.get_event_loop()
+    f = loop.create_server(service.Handler, '0.0.0.0', args.port)
+    server = loop.run_until_complete(f)
+    loop.run_forever()
+
+
+if __name__ == '__main__':
+    main()
