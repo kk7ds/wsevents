@@ -3,11 +3,19 @@
 import argparse
 import asyncio
 import logging
+import logging.handlers
+import os
+import signal
+import sys
 
 import puredaemon
 import setproctitle
 
 from wsevents import event_handler
+
+def sighup_handler(signum, frame):
+    logging.getLogger().info('SIGHUP received, restarting')
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 
 def main():
@@ -24,9 +32,17 @@ def main():
         puredaemon.daemon(nochdir=True)
     setproctitle.setproctitle('event_handler')
 
-    #signal.signal(signal.SIGHUP, sighup_handler)
+    signal.signal(signal.SIGHUP, sighup_handler)
+
     log_format = '%(asctime)-15s %(name)s %(levelname)s %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=log_format)
+    fh = logging.handlers.RotatingFileHandler('event_handler_debug.log',
+                                              maxBytes=10*1024*1024,
+                                              backupCount=1)
+    ff = logging.Formatter(log_format)
+    fh.setFormatter(ff)
+    logging.getLogger().addHandler(fh)
+
     logging.getLogger('asyncio').setLevel(logging.WARNING)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(event_handler.client_loop(args.url))

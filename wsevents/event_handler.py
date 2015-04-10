@@ -8,13 +8,6 @@ import aiohttp
 from stevedore import extension
 
 
-def sighup_handler(signum, frame):
-    @asyncio.coroutine
-    def reload_config():
-        log.info('Config reloaded')
-    asyncio.async(reload_config())
-
-
 @asyncio.coroutine
 def client_loop(url):
     ws = yield from aiohttp.ws_connect(url, autoclose=False, autoping=False)
@@ -104,7 +97,7 @@ class EventHandler(object):
         self._namespace = namespace
         self._log = logging.getLogger('EventHandler')
         self.reload_events()
-    
+
     def reload_events(self):
         self.events = {}
         mgr = extension.ExtensionManager(self._namespace,
