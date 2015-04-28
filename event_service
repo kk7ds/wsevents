@@ -1,4 +1,4 @@
-#!/danplanet/users/dan/venv3/bin/python
+#!/usr/bin/env python3
 
 import argparse
 import asyncio
