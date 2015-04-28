@@ -58,7 +58,10 @@ class Event(object):
             self.reset()
             return False
         if self._index == self._max:
-            return self.postcondition()
+            pc = self.postcondition()
+            if not pc:
+                self.reset()
+            return pc
         else:
             return False
 
