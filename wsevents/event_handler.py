@@ -35,6 +35,23 @@ def client_loop(url):
 
 
 class Event(object):
+    """An event that contains preconditions, postconditions, event matching
+    and actions.
+
+    The event handler loads all of these and, when an event shows up, hits each
+    of these events once to do:
+
+    1. See if the precondition() matches, and if so:
+    2. See if event_00() matches. If so, the next time, it will
+       try event_01, event_02, until the timeout is hit, or all of them
+       match. When they all match,
+    3. It calls postcondition(). If that returns True, then it
+    4. Calls action() which resets the event.
+
+    The goal here is to match single events, or chains of events over
+    a time interval and then take some action.
+    """
+
     def __init__(self, timeout=120):
         self._timeout = timeout
         self._log = logging.getLogger(__name__)

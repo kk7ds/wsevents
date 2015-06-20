@@ -13,6 +13,9 @@ class BadEvent(Exception):
     pass
 
 
+# This isn't really much of a thing. I planned it to be something
+# I could use for firing alerts, but in reality none of my devices
+# specify severities.
 SEVERITIES = ['INFO', 'ERROR', 'WARNING', 'DEBUG']
 CLIENTS = []
 
