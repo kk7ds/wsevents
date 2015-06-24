@@ -11,7 +11,7 @@ Usage:
 
 Just run event_service (probably with --daemon). You can send in events by doing things like:
 
- curl http://foo/events -d "{'event': {'sender': 'foo', 'action': 'test'}}"
+ curl http://foo/events -d '{"event": {"sender": "foo", "action": "test"}}'
 
 In order to listen to events, you need to connect to the websocket
 service. See wsevents/event_handler.py for an aiohttp example of
